@@ -32,7 +32,9 @@ Neuron::Neuron(const int& num_input_nodes,
         double (*ActivationFunction)(double),
         double (*ActivationFunctionDerivative)(double)) {
     bias = RandRange(-1, 1);
-    weights.assign(num_input_nodes, RandRange(-1, 1));
+    for (int i = 0; i < num_input_nodes; i++) {
+        weights.push_back(RandRange(-1, 1));
+    }
     ActivationFunction_ = ActivationFunction;
     ActivationFunctionDerivative_ = ActivationFunctionDerivative;
 }
