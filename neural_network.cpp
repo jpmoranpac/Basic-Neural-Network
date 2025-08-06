@@ -152,8 +152,8 @@ NeuralNetwork::NeuralNetwork(const int& num_inputs, const int& num_outputs,
     for (int i = 1; i < neurons_per_layer.size(); i++) {
         // Each hidden layer has a number of inputs equal to the previous
         // layer's number of neurons
-        layers.push_back(Layer(neurons_per_layer[i],
-                                neurons_per_layer[i-1],
+        layers.push_back(Layer(neurons_per_layer[i-1],
+                                neurons_per_layer[i],
                                 &Relu, &Relu));
     }
 
