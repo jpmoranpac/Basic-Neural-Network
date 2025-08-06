@@ -1,12 +1,17 @@
 #include <iostream>
 
 #include "load_data.h"
+#include "neural_network.h"
 
 int main(int argc, char** argv) {
     int seed = time(NULL);
     printf("Seed: %d\n", seed);
     srand(seed);
 
+    std::vector<int> hidden_layers = {2, 2};
+    NeuralNetwork(3, 3, hidden_layers);
+
+    #if 0
     printf("Loading data...\n");
     std::vector<std::vector<double>> images_train;
     std::vector<int> labels_train;
@@ -36,6 +41,7 @@ int main(int argc, char** argv) {
         PrintAsciiImage(image);
         std::cout << "Random Train Image and Label: " << label << std::endl;
     }
+    #endif
 
     return 0;
 }
