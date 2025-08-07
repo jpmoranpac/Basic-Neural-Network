@@ -8,8 +8,19 @@ int main(int argc, char** argv) {
     printf("Seed: %d\n", seed);
     srand(seed);
 
-    std::vector<int> hidden_layers = {2, 2};
-    NeuralNetwork(3, 3, hidden_layers);
+    std::vector<int> hidden_layers = {1, 2};
+    NeuralNetwork network = NeuralNetwork(1, 2, hidden_layers);
+
+    std::vector<double> inputs = {1};
+    std::vector<double> outputs = network.Forwards(inputs);
+
+    for (auto input : inputs) {
+        printf("Network input: %f\n", input);
+    }
+    network.PrintNetwork();
+    for (auto output : outputs) {
+        printf("Network output: %f\n", output);
+    }
 
     #if 0
     printf("Loading data...\n");

@@ -96,6 +96,13 @@ std::vector<double> Neuron::Backwards(const double& mean_dCost_dOutpuy) {
     return dCost_dInput;
 }
 
+const void Neuron::PrintNeuron() const {
+    printf("(o = %.2f; b = %.2f", latest_output, bias);
+    for (int i = 0; i < weights.size(); i++) {
+        printf("; w_%d = %.2f", i, weights.at(i));
+    }
+    printf(")");
+}
 
 Layer::Layer(const int& num_input_nodes, const int& num_neurons,
         double (*ActivationFunction)(double),
@@ -144,9 +151,20 @@ std::vector<std::vector<double>> Layer::Backwards(
     return dCost_dInput;
 }
 
+void Layer::PrintLayer() const {
+    for (int i = 0; i < neurons.size(); i++) {
+        printf("Neuron %d: ", i);
+        neurons.at(i).PrintNeuron();
+        printf("\t");
+    }
+}
+
 NeuralNetwork::NeuralNetwork(const int& num_inputs, const int& num_outputs, 
                 const std::vector<int>& neurons_per_layer) {
 
+    num_inputs_ = num_inputs;
+    num_outputs_ = num_outputs;
+        
     // First layer takes the raw inputs with no activation function
     layers.push_back(
             Layer(num_inputs, neurons_per_layer.front(), &Unity, &Unity));
@@ -217,4 +235,15 @@ std::vector<double> NeuralNetwork::Calculate_dCostdOutput(
     }
 
     return dCost_dOutput;
+}
+
+void NeuralNetwork::PrintNetwork() const {
+    printf("Neural Network Printout\n");
+    printf("Number of Inputs: %d\n", num_inputs_);
+    for (int i = 0; i < layers.size(); i++) {
+        printf("Layer %d: ", i);
+        layers.at(i).PrintLayer();
+        printf("\n");
+    }
+    printf("Number of Outputs: %d\n", num_outputs_);
 }

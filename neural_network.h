@@ -17,6 +17,8 @@ public:
     double Forwards(const std::vector<double> inputs);
 
     std::vector<double> Backwards(const double& mean_dCost_dOutpuy);
+
+    const void PrintNeuron() const;
 };
 
 class Layer {
@@ -32,12 +34,16 @@ public:
 
     std::vector<std::vector<double>> Backwards(
                         const std::vector<std::vector<double>>& dCost_dOutput);
+
+    void PrintLayer() const;
 };
 
 class NeuralNetwork {
 public:
     std::vector<Layer> layers;
     std::vector<double> last_output;
+    int num_inputs_ = 0;
+    int num_outputs_ = 0;
     
     NeuralNetwork(const int& num_inputs, const int& num_outputs, 
                   const std::vector<int>& neurons_per_layer);
@@ -50,4 +56,6 @@ public:
 
     std::vector<double> Calculate_dCostdOutput(
                                             const std::vector<double>& target);
+
+    void PrintNetwork() const;
 };
