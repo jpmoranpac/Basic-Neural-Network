@@ -37,12 +37,14 @@ int MnistExample() {
         printf("Failed to load data.\n");
         return 1;
     }
+    printf("Loaded %d training samples and %d testing samples\n",
+            labels_train.size(), labels_test.size());
 
     std::vector<int> hidden_layers = {100, 100};
     NeuralNetwork network = NeuralNetwork(28 * 28, 10, hidden_layers);
 
-    const int kEpoch = 50;
-    const int kBatchSize = 100;
+    const int kEpoch = 20;
+    const int kBatchSize = 200;
 
     printf("Beginning training...\n");
 
