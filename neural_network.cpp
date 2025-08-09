@@ -222,7 +222,7 @@ std::vector<double> NeuralNetwork::CalculateError(
     std::vector<double> error;
     for (int i = 0; i < last_output.size(); i++) {
         // Mean squared error
-        error.push_back(pow(target.at(i) - last_output.at(i), 2));
+        error.push_back(pow(last_output.at(i) - target.at(i), 2));
     }
 
     return error;
