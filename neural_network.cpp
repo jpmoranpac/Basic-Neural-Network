@@ -4,7 +4,7 @@
 
 #include "neural_network.h"
 
-#define LEARNING_RATE 0.01
+#define LEARNING_RATE 0.025
 
 /* generate a random floating point number from min to max */
 double RandRange(const double &min, const double& max) 
