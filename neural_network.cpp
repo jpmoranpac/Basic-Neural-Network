@@ -14,10 +14,14 @@ double RandRange(const double &min, const double& max)
     return min + (rand() / div);
 }
 
-double FastSigmoid(double input) {
-    // Approximate Sigmoid function:
-    // 1 / (1 + |x|)
-    return 1 / (1 + abs(input));
+// Activation functions
+double Sigmoid(double input) {
+    return 1.0 / (1.0 + std::exp(-input));
+}
+
+// input is sigmoid activated output 'a'
+double SigmoidDerivative(double input) {
+    return input * (1.0 - input);
 }
 
 double Relu(double input) {
@@ -169,20 +173,20 @@ NeuralNetwork::NeuralNetwork(const int& num_inputs, const int& num_outputs,
         
     // First layer takes the raw inputs with no activation function
     layers.push_back(
-            Layer(num_inputs, neurons_per_layer.front(), &Unity, &Unity));
+            Layer(num_inputs, neurons_per_layer.front(), &Sigmoid, &SigmoidDerivative));
 
     for (int i = 1; i < neurons_per_layer.size(); i++) {
         // Each hidden layer has a number of inputs equal to the previous
         // layer's number of neurons
         layers.push_back(Layer(neurons_per_layer[i-1],
                                 neurons_per_layer[i],
-                                &Relu, &Relu));
+                                &Sigmoid, &SigmoidDerivative));
     }
 
     // Final layer has the last hidden layer's neuron count as the input and
     // the raw output with no activation function
     layers.push_back(
-            Layer(neurons_per_layer.back(), num_outputs, &Unity, &Unity));
+            Layer(neurons_per_layer.back(), num_outputs, &Sigmoid, &SigmoidDerivative));
 }
 
 std::vector<double> NeuralNetwork::Forwards(
