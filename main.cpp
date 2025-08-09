@@ -127,12 +127,25 @@ int main(int argc, char** argv) {
     srand(seed);
 
     //return MnistExample();
-    TankPopulationExercise ex = CreateTankPopulationExercise(0, 100, 5);
 
-    printf("Tank population: %d\n", ex.true_population);
-    printf("Peeks: \t");
-    for (const auto& p : ex.population_peeks) {
-        printf("%d\t", p);
+    // Sample output
+    for (int i = 0; i < 10; i++) {
+        TankPopulationExercise ex = CreateTankPopulationExercise(20, 1000, 20);
+        const int pop = ex.true_population;
+        const int pred = FrequentistPrediction(ex.population_peeks);
+        const double error = abs(pred - pop) / static_cast<double>(pop);
+        printf("Tank population: %4.0d, Prediction: %4.0d, Error: %.2f%%\n",
+                pop, pred, error * 100);
     }
-    printf("\n");
+
+    const int kTotalRuns = 10000;
+    double mean_error = 0.0;
+    for (int i = 0; i < kTotalRuns; i++) {
+        TankPopulationExercise ex = CreateTankPopulationExercise(20, 1000, 20);
+        const int pop = ex.true_population;
+        const int pred = FrequentistPrediction(ex.population_peeks);
+        mean_error += abs(pred - pop) / static_cast<double>(pop) / kTotalRuns;
+    }
+    printf("Mean error over %d runs: %.2f%%\n",
+            kTotalRuns, mean_error * 100);
 }
