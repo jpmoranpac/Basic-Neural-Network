@@ -21,7 +21,7 @@ std::vector<int> GenerateRandomTankPopulation(const int& min, const int& max) {
     //                   key?
 
     std::vector<int> tank_population(population_count);
-    std::iota(tank_population.begin(), tank_population.end(), 0);
+    std::iota(tank_population.begin(), tank_population.end(), 1);
 
     // Pre-shuffle the population
     std::shuffle(tank_population.begin(), tank_population.end(), random_source);
