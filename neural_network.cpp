@@ -34,13 +34,13 @@ double Unity(double input) {
 
 Neuron::Neuron(const int& num_input_nodes,
         double (*ActivationFunction)(double),
-        double (*ActivationFunctionDerivative)(double)) {
+        double (*ActivationFunctionDerivative)(double)) :
+        ActivationFunction_(ActivationFunction),
+        ActivationFunctionDerivative_(ActivationFunctionDerivative) {
     bias = RandRange(-1, 1);
     for (int i = 0; i < num_input_nodes; i++) {
         weights.push_back(RandRange(-1, 1));
     }
-    ActivationFunction_ = ActivationFunction;
-    ActivationFunctionDerivative_ = ActivationFunctionDerivative;
 }
 
 double Neuron::Forwards(const std::vector<double>& inputs) {
@@ -120,13 +120,13 @@ const void Neuron::PrintNeuron() const {
 
 Layer::Layer(const int& num_input_nodes, const int& num_neurons,
         double (*ActivationFunction)(double),
-        double (*ActivationFunctionDerivative)(double)) {
+        double (*ActivationFunctionDerivative)(double)) :
+        num_inputs(num_input_nodes) {
     for (int i = 0; i < num_neurons; i++) {
         neurons.push_back(Neuron(num_input_nodes,
                                     ActivationFunction,
                                     ActivationFunctionDerivative));
     }
-    num_inputs = num_input_nodes;
 }
 
 std::vector<double> Layer::Forwards(const std::vector<double>& inputs) {
@@ -184,10 +184,8 @@ void Layer::PrintLayer() const {
 }
 
 NeuralNetwork::NeuralNetwork(const int& num_inputs, const int& num_outputs, 
-                const std::vector<int>& neurons_per_layer) {
-
-    num_inputs_ = num_inputs;
-    num_outputs_ = num_outputs;
+                const std::vector<int>& neurons_per_layer):
+                num_inputs_(num_inputs), num_outputs_(num_outputs) {
         
     // First layer takes the raw inputs with no activation function
     layers.push_back(
