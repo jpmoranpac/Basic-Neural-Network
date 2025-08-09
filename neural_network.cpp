@@ -43,7 +43,7 @@ Neuron::Neuron(const int& num_input_nodes,
     ActivationFunctionDerivative_ = ActivationFunctionDerivative;
 }
 
-double Neuron::Forwards(const std::vector<double> inputs) {
+double Neuron::Forwards(const std::vector<double>& inputs) {
     if (inputs.size() != weights.size()) {
         throw;
     }
@@ -91,7 +91,7 @@ std::vector<double> Neuron::Backwards(const double& mean_dCost_dOutpuy) {
     // ∂a/∂z = derivative of activation function
     // ∂z/∂_L-1 = w
     // ∂C/∂w = 2(a - y) * ∂a/∂z * w
-
+    
     std::vector<double> dCost_dInput;
     for (const double& weight : weights) {
         dCost_dInput.push_back(weight * delta);
@@ -121,7 +121,7 @@ Layer::Layer(const int& num_input_nodes, const int& num_neurons,
     num_inputs = num_input_nodes;
 }
 
-std::vector<double> Layer::Forwards(const std::vector<double> inputs) {
+std::vector<double> Layer::Forwards(const std::vector<double>& inputs) {
     if (num_inputs != inputs.size()) {
         throw;
     }

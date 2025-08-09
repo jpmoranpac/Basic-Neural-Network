@@ -15,7 +15,7 @@ public:
            double (*ActivationFunction)(double),
            double (*ActivationFunctionDerivative)(double));
 
-    double Forwards(const std::vector<double> inputs);
+    double Forwards(const std::vector<double>& inputs);
 
     std::vector<double> Backwards(const double& mean_dCost_dOutpuy);
 
@@ -31,7 +31,7 @@ public:
           double (*ActivationFunction)(double),
           double (*ActivationFunctionDerivative)(double));
 
-    std::vector<double> Forwards(const std::vector<double> inputs);
+    std::vector<double> Forwards(const std::vector<double>& inputs);
 
     std::vector<std::vector<double>> Backwards(
                         const std::vector<std::vector<double>>& dCost_dOutput);
