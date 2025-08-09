@@ -44,17 +44,22 @@ double Neuron::Forwards(const std::vector<double> inputs) {
         throw;
     }
 
+    latest_input = inputs;
+
     double result = bias;
     for (int i = 0; i < inputs.size(); i++) {
         result += inputs.at(i) * weights.at(i);
     }
 
-    latest_output = result;
+    latest_output = ActivationFunction_(result);
 
-    return ActivationFunction_(result);
+    return latest_output;
 }
 
 std::vector<double> Neuron::Backwards(const double& mean_dCost_dOutpuy) {
+    double delta = mean_dCost_dOutpuy 
+                   * ActivationFunctionDerivative_(latest_output);
+
     // Bias delta: -(learning rate * error * activation function derivative)
     // b: bias, a: output, y: target
     // ∂C/∂b = ∂z/∂b * ∂a/∂z * ∂C/∂a
@@ -62,8 +67,7 @@ std::vector<double> Neuron::Backwards(const double& mean_dCost_dOutpuy) {
     // ∂a/∂z = derivative of activation function
     // ∂z/∂b = 1
     // ∂C/∂w = 2(a - y) * ∂a/∂z
-    bias -= LEARNING_RATE * mean_dCost_dOutpuy 
-            * ActivationFunctionDerivative_(latest_output);
+    bias -= LEARNING_RATE * delta;
 
     // Weight change: -(learning rate * error *
     //           activation function derivative * output of previous layer)
@@ -73,9 +77,8 @@ std::vector<double> Neuron::Backwards(const double& mean_dCost_dOutpuy) {
     // ∂a/∂z = derivative of activation function
     // ∂z/∂w = a_L-1
     // ∂C/∂w = 2(a - y) * ∂a/∂z * a_L-1
-    for (double& weight : weights) {
-        weight -= LEARNING_RATE * mean_dCost_dOutpuy * weight
-                    * ActivationFunctionDerivative_(latest_output);
+    for (int i = 0; i < weights.size(); i++) {
+        weights.at(i) -= LEARNING_RATE * latest_input.at(i) * delta;
     }
 
     // w: weight, a: output, y: target
@@ -87,8 +90,7 @@ std::vector<double> Neuron::Backwards(const double& mean_dCost_dOutpuy) {
 
     std::vector<double> dCost_dInput;
     for (const double& weight : weights) {
-        dCost_dInput.push_back(mean_dCost_dOutpuy * weight
-                            * ActivationFunctionDerivative_(latest_output));
+        dCost_dInput.push_back(weight * delta);
     }
     
     // For the change in weight for previous layer:
@@ -231,7 +233,7 @@ std::vector<double> NeuralNetwork::Calculate_dCostdOutput(
     std::vector<double> dCost_dOutput;
     for (int i = 0; i < last_output.size(); i++) {
         // Mean squared error derivative
-        dCost_dOutput.push_back((target.at(i) - last_output.at(i)) *2);
+        dCost_dOutput.push_back(2 * (last_output.at(i) - target.at(i)));
     }
 
     return dCost_dOutput;

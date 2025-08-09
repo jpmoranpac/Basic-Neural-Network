@@ -10,6 +10,7 @@ public:
     double (*ActivationFunctionDerivative_)(double);
 
     double latest_output;
+    std::vector<double> latest_input;
     Neuron(const int& num_input_nodes,
            double (*ActivationFunction)(double),
            double (*ActivationFunctionDerivative)(double));
