@@ -23,20 +23,17 @@ NeuralNetwork::NeuralNetwork(const int& num_inputs, const int& num_outputs,
                              const std::vector<int>& neurons_per_layer):
                              num_inputs_(num_inputs), num_outputs_(num_outputs)
                              {
-        
-    // First layer
-    layers.push_back(Layer(num_inputs, neurons_per_layer.front(),
-                           &Sigmoid, &SigmoidDerivative));
-
-    for (int i = 1; i < neurons_per_layer.size(); i++) {
+    int prev_size = num_inputs;
+    for (const auto& num_neurons : neurons_per_layer) {
         // Each hidden layer has a number of inputs equal to the previous
         // layer's number of neurons
-        layers.push_back(Layer(neurons_per_layer[i-1], neurons_per_layer[i],
+        layers.emplace_back(Layer(prev_size, num_neurons,
                                 &Sigmoid, &SigmoidDerivative));
+        prev_size = num_neurons;
     }
 
     // Output layer
-    layers.push_back(Layer(neurons_per_layer.back(), num_outputs, 
+    layers.emplace_back(Layer(neurons_per_layer.back(), num_outputs, 
                            &Sigmoid, &SigmoidDerivative));
 }
 
@@ -45,7 +42,7 @@ Layer::Layer(const int& num_input_nodes, const int& num_neurons,
              double (*ActivationFunctionDerivative)(double)) :
              num_inputs(num_input_nodes) {
     for (int i = 0; i < num_neurons; i++) {
-        neurons.push_back(Neuron(num_input_nodes, ActivationFunction,
+        neurons.emplace_back(Neuron(num_input_nodes, ActivationFunction,
                                  ActivationFunctionDerivative));
     }
 }
