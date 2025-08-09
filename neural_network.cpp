@@ -1,12 +1,13 @@
 #include <vector>
 #include <algorithm>
 #include <random>
+#include <stdexcept>
 
 #include "neural_network.h"
 
 #define LEARNING_RATE 0.025
 
-/* generate a random floating point number from min to max */
+// Generate a random number between min and max
 double RandRange(const double &min, const double& max) 
 {
     double range = (max - min); 
@@ -19,7 +20,6 @@ double Sigmoid(double input) {
     return 1.0 / (1.0 + std::exp(-input));
 }
 
-// input is sigmoid activated output 'a'
 double SigmoidDerivative(double input) {
     return input * (1.0 - input);
 }
@@ -45,7 +45,9 @@ Neuron::Neuron(const int& num_input_nodes,
 
 double Neuron::Forwards(const std::vector<double>& inputs) {
     if (inputs.size() != weights.size()) {
-        throw;
+            throw std::runtime_error("Input size mismatch in Neuron::Forwards. "
+                        "Input size is " + std::to_string(inputs.size()) 
+                        + ", weight size is " + std::to_string(weights.size()));
     }
 
     latest_input = inputs;
@@ -61,6 +63,12 @@ double Neuron::Forwards(const std::vector<double>& inputs) {
 }
 
 std::vector<double> Neuron::Backwards(const double& mean_dCost_dOutpuy) {
+    if (latest_input.size() != weights.size()) {
+            throw std::runtime_error("Input size mismatch in Neuron::Backwards."
+                        " Input size is " + std::to_string(latest_input.size()) 
+                        + ", weight size is " + std::to_string(weights.size()));
+    }
+
     double delta = mean_dCost_dOutpuy 
                    * ActivationFunctionDerivative_(latest_output);
 
@@ -123,7 +131,9 @@ Layer::Layer(const int& num_input_nodes, const int& num_neurons,
 
 std::vector<double> Layer::Forwards(const std::vector<double>& inputs) {
     if (num_inputs != inputs.size()) {
-        throw;
+        throw std::runtime_error("Input size mismatch in Layer::Forwards. "
+                    "Input size is " + std::to_string(inputs.size()) 
+                    + ", expected input size is " + std::to_string(num_inputs));
     }
 
     std::vector<double> output;
@@ -138,6 +148,14 @@ std::vector<double> Layer::Forwards(const std::vector<double>& inputs) {
 //       of the mean error for each neuron on the previous layer
 std::vector<std::vector<double>> Layer::Backwards(
             const std::vector<std::vector<double>>& dCost_dOutput) {
+    for (const auto& single_dCost : dCost_dOutput) {
+        if (neurons.size() != single_dCost.size()) {
+                throw std::runtime_error("Input size mismatch in Layer::Backwar"
+                "ds. dCost_dOutput is " + std::to_string(single_dCost.size()) 
+                + ", number of neurons is " + std::to_string(neurons.size()));
+        }
+    }
+
     // The inner vector is the dCost_dInput of a single neuron on all 
     // neurons of the previous layer
     std::vector<std::vector<double>> dCost_dInput;
@@ -191,6 +209,12 @@ NeuralNetwork::NeuralNetwork(const int& num_inputs, const int& num_outputs,
 
 std::vector<double> NeuralNetwork::Forwards(
                                         const std::vector<double>& input) {
+    if (num_inputs_ != input.size()) {
+        throw std::runtime_error("Input size mismatch in NeuralNetwork::Forward"
+                    "s. Input size is " + std::to_string(input.size()) 
+                    + ", expected input size is " + std::to_string(num_inputs_));
+    }
+
     std::vector<double> next_input = input;
     std::vector<double> current_output;
 
@@ -203,6 +227,12 @@ std::vector<double> NeuralNetwork::Forwards(
 }
 
 void NeuralNetwork::Backwards(const std::vector<double>& target) {
+    if (num_outputs_ != target.size()) {
+        throw std::runtime_error("Input size mismatch in NeuralNetwork::Backwar"
+                    "ds. Target size is " + std::to_string(target.size()) 
+                    + ", expected target size is " + std::to_string(num_outputs_));
+    }
+
     std::vector<std::vector<double>> dCost_dOutput;
     dCost_dOutput.push_back(Calculate_dCostdOutput(target));
     std::vector<std::vector<double>> dCost_dInput;
@@ -216,7 +246,9 @@ void NeuralNetwork::Backwards(const std::vector<double>& target) {
 std::vector<double> NeuralNetwork::CalculateError(
                                         const std::vector<double>& target) {
     if (last_output.size() != target.size()) {
-        throw;
+        throw std::runtime_error("Input size mismatch in NeuralNetwork::Calcula"
+            "teError. Target size is " + std::to_string(target.size()) 
+            + ", last output size is " + std::to_string(last_output.size()));
     }
 
     std::vector<double> error;
@@ -231,7 +263,9 @@ std::vector<double> NeuralNetwork::CalculateError(
 std::vector<double> NeuralNetwork::Calculate_dCostdOutput(
                                         const std::vector<double>& target) {
     if (last_output.size() != target.size()) {
-        throw;
+        throw std::runtime_error("Input size mismatch in NeuralNetwork::Calcula"
+            "te_dCostdOutput. Target size is " + std::to_string(target.size()) 
+            + ", last output size is " + std::to_string(last_output.size()));
     }
 
     std::vector<double> dCost_dOutput;
