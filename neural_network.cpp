@@ -7,6 +7,14 @@
 
 #define LEARNING_RATE 0.025
 
+// Generate a random number between min and max
+double RandRange(const double &min, const double& max) 
+{
+    double range = (max - min); 
+    double div = RAND_MAX / range;
+    return min + (rand() / div);
+}
+
 // =======================================
 // Constructors
 // =======================================
@@ -230,14 +238,6 @@ std::vector<double> NeuralNetwork::Calculate_dCostdOutput(const std::vector
 // =======================================
 // Utility and Debug Methods
 // =======================================
-
-// Generate a random number between min and max
-double RandRange(const double &min, const double& max) 
-{
-    double range = (max - min); 
-    double div = RAND_MAX / range;
-    return min + (rand() / div);
-}
 
 void NeuralNetwork::PrintNetwork() const {
     printf("Neural Network Printout\n");
