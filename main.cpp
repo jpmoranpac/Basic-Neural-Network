@@ -2,6 +2,7 @@
 
 #include "load_data.h"
 #include "neural_network.h"
+#include "tank_counting.cx"
 
 int SimpleExample() {
     // Create NN: input=2, one hidden layer with 2 neurons, output=1 neuron
@@ -98,9 +99,9 @@ int MnistExample() {
 
     // Print a selection of random images to demonstrate learning
     for (int i = 0; i < 10; i++) {
-        int index = rand() % images_train.size();
-        std::vector<double> image = images_train[index];
-        int label = labels_train[index];
+        int index = rand() % images_test.size();
+        std::vector<double> image = images_test[index];
+        int label = labels_test[index];
 
         std::vector<double> output = network.Forwards(image);
 
@@ -125,5 +126,13 @@ int main(int argc, char** argv) {
     printf("Seed: %d\n", seed);
     srand(seed);
 
-    return MnistExample();
+    //return MnistExample();
+    TankPopulationExercise ex = CreateTankPopulationExercise(0, 100, 5);
+
+    printf("Tank population: %d\n", ex.true_population);
+    printf("Peeks: \t");
+    for (const auto& p : ex.population_peeks) {
+        printf("%d\t", p);
+    }
+    printf("\n");
 }
