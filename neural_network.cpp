@@ -1,46 +1,92 @@
 #include <vector>
-#include <algorithm>
 #include <random>
 #include <stdexcept>
 
 #include "neural_network.h"
+#include "activation_functions.h"
 
 #define LEARNING_RATE 0.025
 
-// Generate a random number between min and max
-double RandRange(const double &min, const double& max) 
-{
-    double range = (max - min); 
-    double div = RAND_MAX / range;
-    return min + (rand() / div);
+// =======================================
+// Constructors
+// =======================================
+
+NeuralNetwork::NeuralNetwork(const int& num_inputs, const int& num_outputs, 
+                             const std::vector<int>& neurons_per_layer):
+                             num_inputs_(num_inputs), num_outputs_(num_outputs)
+                             {
+        
+    // First layer
+    layers.push_back(Layer(num_inputs, neurons_per_layer.front(),
+                           &Sigmoid, &SigmoidDerivative));
+
+    for (int i = 1; i < neurons_per_layer.size(); i++) {
+        // Each hidden layer has a number of inputs equal to the previous
+        // layer's number of neurons
+        layers.push_back(Layer(neurons_per_layer[i-1], neurons_per_layer[i],
+                                &Sigmoid, &SigmoidDerivative));
+    }
+
+    // Output layer
+    layers.push_back(Layer(neurons_per_layer.back(), num_outputs, 
+                           &Sigmoid, &SigmoidDerivative));
 }
 
-// Activation functions
-double Sigmoid(double input) {
-    return 1.0 / (1.0 + std::exp(-input));
+Layer::Layer(const int& num_input_nodes, const int& num_neurons,
+             double (*ActivationFunction)(double),
+             double (*ActivationFunctionDerivative)(double)) :
+             num_inputs(num_input_nodes) {
+    for (int i = 0; i < num_neurons; i++) {
+        neurons.push_back(Neuron(num_input_nodes, ActivationFunction,
+                                 ActivationFunctionDerivative));
+    }
 }
 
-double SigmoidDerivative(double input) {
-    return input * (1.0 - input);
-}
-
-double Relu(double input) {
-    return input < 0 ? 0 : input;
-}
-
-double Unity(double input) {
-    return input;
-}
-
-Neuron::Neuron(const int& num_input_nodes,
-        double (*ActivationFunction)(double),
-        double (*ActivationFunctionDerivative)(double)) :
-        ActivationFunction_(ActivationFunction),
-        ActivationFunctionDerivative_(ActivationFunctionDerivative) {
+Neuron::Neuron(const int& num_input_nodes, double (*ActivationFunction)(double),
+               double (*ActivationFunctionDerivative)(double)) :
+               ActivationFunction_(ActivationFunction),
+               ActivationFunctionDerivative_(ActivationFunctionDerivative) {
     bias = RandRange(-1, 1);
     for (int i = 0; i < num_input_nodes; i++) {
         weights.push_back(RandRange(-1, 1));
     }
+}
+
+// =======================================
+// Forward Propagation Methods
+// =======================================
+
+std::vector<double> NeuralNetwork::Forwards(const std::vector<double>& input) {
+    if (num_inputs_ != input.size()) {
+        throw std::runtime_error("Input size mismatch in NeuralNetwork::Forward"
+                    "s. Input size is " + std::to_string(input.size()) 
+                    + ", expected input size is " + std::to_string(num_inputs_));
+    }
+
+    std::vector<double> next_input = input;
+    std::vector<double> current_output;
+
+    for (Layer& layer : layers) {
+        current_output = layer.Forwards(next_input);
+        next_input = current_output;
+    }
+
+    return last_output = current_output;
+}
+
+std::vector<double> Layer::Forwards(const std::vector<double>& inputs) {
+    if (num_inputs != inputs.size()) {
+        throw std::runtime_error("Input size mismatch in Layer::Forwards. "
+                    "Input size is " + std::to_string(inputs.size()) 
+                    + ", expected input size is " + std::to_string(num_inputs));
+    }
+
+    std::vector<double> output;
+    for (Neuron& neuron : neurons) {
+        output.push_back(neuron.Forwards(inputs));
+    }
+
+    return output;
 }
 
 double Neuron::Forwards(const std::vector<double>& inputs) {
@@ -62,92 +108,31 @@ double Neuron::Forwards(const std::vector<double>& inputs) {
     return latest_output;
 }
 
-std::vector<double> Neuron::Backwards(const double& mean_dCost_dOutpuy) {
-    if (latest_input.size() != weights.size()) {
-            throw std::runtime_error("Input size mismatch in Neuron::Backwards."
-                        " Input size is " + std::to_string(latest_input.size()) 
-                        + ", weight size is " + std::to_string(weights.size()));
+// =======================================
+// Backward Propagation Methods
+// =======================================
+
+void NeuralNetwork::Backwards(const std::vector<double>& target) {
+    if (num_outputs_ != target.size()) {
+        throw std::runtime_error("Input size mismatch in NeuralNetwork::Backwar"
+                    "ds. Target size is " + std::to_string(target.size()) 
+                    + ", expected target size is " + std::to_string(num_outputs_));
     }
 
-    double delta = mean_dCost_dOutpuy 
-                   * ActivationFunctionDerivative_(latest_output);
+    std::vector<std::vector<double>> dCost_dOutput;
+    dCost_dOutput.push_back(Calculate_dCostdOutput(target));
+    std::vector<std::vector<double>> dCost_dInput;
 
-    // Bias delta: -(learning rate * error * activation function derivative)
-    // b: bias, a: output, y: target
-    // ∂C/∂b = ∂z/∂b * ∂a/∂z * ∂C/∂a
-    // ∂C/∂a = 2(a - y)
-    // ∂a/∂z = derivative of activation function
-    // ∂z/∂b = 1
-    // ∂C/∂w = 2(a - y) * ∂a/∂z
-    bias -= LEARNING_RATE * delta;
-
-    // Weight change: -(learning rate * error *
-    //           activation function derivative * output of previous layer)
-    // w: weight, a: output, y: target
-    // ∂C/∂w = ∂z/∂w * ∂a/∂z * ∂C/∂a
-    // ∂C/∂a = 2(a - y)
-    // ∂a/∂z = derivative of activation function
-    // ∂z/∂w = a_L-1
-    // ∂C/∂w = 2(a - y) * ∂a/∂z * a_L-1
-    for (int i = 0; i < weights.size(); i++) {
-        weights.at(i) -= LEARNING_RATE * latest_input.at(i) * delta;
+    for (auto it = layers.rbegin(); it != layers.rend(); ++it) {
+        dCost_dInput = it->Backwards(dCost_dOutput);
+        dCost_dOutput = dCost_dInput;
     }
-
-    // w: weight, a: output, y: target
-    // ∂C/∂a_L-1 = ∂z/∂a_L-1 * ∂a/∂z * ∂C/∂a
-    // ∂C/∂a = 2(a - y)
-    // ∂a/∂z = derivative of activation function
-    // ∂z/∂_L-1 = w
-    // ∂C/∂w = 2(a - y) * ∂a/∂z * w
-    
-    std::vector<double> dCost_dInput;
-    for (const double& weight : weights) {
-        dCost_dInput.push_back(weight * delta);
-    }
-    
-    // For the change in weight for previous layer:
-    // ∂C/∂w_L-1 = ∂z_L-1/∂w_L-1 * ∂a_L-1/∂z * ∂C/∂a_L-1
-    return dCost_dInput;
-}
-
-const void Neuron::PrintNeuron() const {
-    printf("(o = %.2f; b = %.2f", latest_output, bias);
-    for (int i = 0; i < weights.size(); i++) {
-        printf("; w_%d = %.2f", i, weights.at(i));
-    }
-    printf(")");
-}
-
-Layer::Layer(const int& num_input_nodes, const int& num_neurons,
-        double (*ActivationFunction)(double),
-        double (*ActivationFunctionDerivative)(double)) :
-        num_inputs(num_input_nodes) {
-    for (int i = 0; i < num_neurons; i++) {
-        neurons.push_back(Neuron(num_input_nodes,
-                                    ActivationFunction,
-                                    ActivationFunctionDerivative));
-    }
-}
-
-std::vector<double> Layer::Forwards(const std::vector<double>& inputs) {
-    if (num_inputs != inputs.size()) {
-        throw std::runtime_error("Input size mismatch in Layer::Forwards. "
-                    "Input size is " + std::to_string(inputs.size()) 
-                    + ", expected input size is " + std::to_string(num_inputs));
-    }
-
-    std::vector<double> output;
-    for (Neuron& neuron : neurons) {
-        output.push_back(neuron.Forwards(inputs));
-    }
-
-    return output;
 }
 
 // TODO: instead of returning the whole vector, process a running sum
 //       of the mean error for each neuron on the previous layer
-std::vector<std::vector<double>> Layer::Backwards(
-            const std::vector<std::vector<double>>& dCost_dOutput) {
+std::vector<std::vector<double>> Layer::Backwards(const std::vector<std::vector
+                                                  <double>>& dCost_dOutput) {
     for (const auto& single_dCost : dCost_dOutput) {
         if (neurons.size() != single_dCost.size()) {
                 throw std::runtime_error("Input size mismatch in Layer::Backwar"
@@ -175,74 +160,41 @@ std::vector<std::vector<double>> Layer::Backwards(
     return dCost_dInput;
 }
 
-void Layer::PrintLayer() const {
-    for (int i = 0; i < neurons.size(); i++) {
-        printf("Neuron %d: ", i);
-        neurons.at(i).PrintNeuron();
-        printf("\t");
+std::vector<double> Neuron::Backwards(const double& mean_dCost_dOutpuy) {
+    if (latest_input.size() != weights.size()) {
+            throw std::runtime_error("Input size mismatch in Neuron::Backwards."
+                        " Input size is " + std::to_string(latest_input.size()) 
+                        + ", weight size is " + std::to_string(weights.size()));
     }
+
+    double delta = mean_dCost_dOutpuy 
+                   * ActivationFunctionDerivative_(latest_output);
+
+    // Bias change: -(learning rate * error * activation function derivative)
+    bias -= LEARNING_RATE * delta;
+
+    // Weight change: -(learning rate * error *
+    //           activation function derivative * output of previous layer)
+    for (int i = 0; i < weights.size(); i++) {
+        weights.at(i) -= LEARNING_RATE * latest_input.at(i) * delta;
+    }
+
+    // Cost to previous layer: -(learning rate * error *
+    //           activation function derivative * weight)
+    std::vector<double> dCost_dInput;
+    for (const double& weight : weights) {
+        dCost_dInput.push_back(weight * delta);
+    }
+    
+    return dCost_dInput;
 }
 
-NeuralNetwork::NeuralNetwork(const int& num_inputs, const int& num_outputs, 
-                const std::vector<int>& neurons_per_layer):
-                num_inputs_(num_inputs), num_outputs_(num_outputs) {
-        
-    // First layer takes the raw inputs with no activation function
-    layers.push_back(
-            Layer(num_inputs, neurons_per_layer.front(), &Sigmoid, &SigmoidDerivative));
+// =======================================
+// Network Interface Methods
+// =======================================
 
-    for (int i = 1; i < neurons_per_layer.size(); i++) {
-        // Each hidden layer has a number of inputs equal to the previous
-        // layer's number of neurons
-        layers.push_back(Layer(neurons_per_layer[i-1],
-                                neurons_per_layer[i],
-                                &Sigmoid, &SigmoidDerivative));
-    }
-
-    // Final layer has the last hidden layer's neuron count as the input and
-    // the raw output with no activation function
-    layers.push_back(
-            Layer(neurons_per_layer.back(), num_outputs, &Sigmoid, &SigmoidDerivative));
-}
-
-std::vector<double> NeuralNetwork::Forwards(
-                                        const std::vector<double>& input) {
-    if (num_inputs_ != input.size()) {
-        throw std::runtime_error("Input size mismatch in NeuralNetwork::Forward"
-                    "s. Input size is " + std::to_string(input.size()) 
-                    + ", expected input size is " + std::to_string(num_inputs_));
-    }
-
-    std::vector<double> next_input = input;
-    std::vector<double> current_output;
-
-    for (Layer& layer : layers) {
-        current_output = layer.Forwards(next_input);
-        next_input = current_output;
-    }
-
-    return last_output = current_output;
-}
-
-void NeuralNetwork::Backwards(const std::vector<double>& target) {
-    if (num_outputs_ != target.size()) {
-        throw std::runtime_error("Input size mismatch in NeuralNetwork::Backwar"
-                    "ds. Target size is " + std::to_string(target.size()) 
-                    + ", expected target size is " + std::to_string(num_outputs_));
-    }
-
-    std::vector<std::vector<double>> dCost_dOutput;
-    dCost_dOutput.push_back(Calculate_dCostdOutput(target));
-    std::vector<std::vector<double>> dCost_dInput;
-
-    for (auto it = layers.rbegin(); it != layers.rend(); ++it) {
-        dCost_dInput = it->Backwards(dCost_dOutput);
-        dCost_dOutput = dCost_dInput;
-    }
-}
-
-std::vector<double> NeuralNetwork::CalculateError(
-                                        const std::vector<double>& target) {
+std::vector<double> NeuralNetwork::CalculateError(const std::vector<double>&
+                                                  target) {
     if (last_output.size() != target.size()) {
         throw std::runtime_error("Input size mismatch in NeuralNetwork::Calcula"
             "teError. Target size is " + std::to_string(target.size()) 
@@ -258,8 +210,8 @@ std::vector<double> NeuralNetwork::CalculateError(
     return error;
 }
 
-std::vector<double> NeuralNetwork::Calculate_dCostdOutput(
-                                        const std::vector<double>& target) {
+std::vector<double> NeuralNetwork::Calculate_dCostdOutput(const std::vector
+                                                          <double>& target) {
     if (last_output.size() != target.size()) {
         throw std::runtime_error("Input size mismatch in NeuralNetwork::Calcula"
             "te_dCostdOutput. Target size is " + std::to_string(target.size()) 
@@ -275,6 +227,18 @@ std::vector<double> NeuralNetwork::Calculate_dCostdOutput(
     return dCost_dOutput;
 }
 
+// =======================================
+// Utility and Debug Methods
+// =======================================
+
+// Generate a random number between min and max
+double RandRange(const double &min, const double& max) 
+{
+    double range = (max - min); 
+    double div = RAND_MAX / range;
+    return min + (rand() / div);
+}
+
 void NeuralNetwork::PrintNetwork() const {
     printf("Neural Network Printout\n");
     printf("Number of Inputs: %d\n", num_inputs_);
@@ -284,4 +248,20 @@ void NeuralNetwork::PrintNetwork() const {
         printf("\n");
     }
     printf("Number of Outputs: %d\n", num_outputs_);
+}
+
+void Layer::PrintLayer() const {
+    for (int i = 0; i < neurons.size(); i++) {
+        printf("Neuron %d: ", i);
+        neurons.at(i).PrintNeuron();
+        printf("\t");
+    }
+}
+
+const void Neuron::PrintNeuron() const {
+    printf("(o = %.2f; b = %.2f", latest_output, bias);
+    for (int i = 0; i < weights.size(); i++) {
+        printf("; w_%d = %.2f", i, weights.at(i));
+    }
+    printf(")");
 }
