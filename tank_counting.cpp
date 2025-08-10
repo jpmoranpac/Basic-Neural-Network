@@ -29,12 +29,6 @@ std::vector<int> GenerateRandomTankPopulation(const int& min, const int& max) {
     return tank_population;
 }
 
-/// @brief Return the first x elements of the population, where x is the number 
-///        of peeks requested. Will not return duplicate peeks of the same
-///        serial number. Assumed population is pre-shuffled.
-/// @param tank_population a pre-shuffled population of tank serial numbers
-/// @param number_of_peeks number of peeks to perform
-/// @return a vector of integers representing the serial numbers peeked
 std::vector<int> PeekTankSerialNumbers(const std::vector<int>& tank_population,
                                        const int& number_of_peeks) { 
     return std::vector<int>(tank_population.begin(),

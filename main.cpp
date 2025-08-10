@@ -2,7 +2,7 @@
 
 #include "load_data.h"
 #include "neural_network.h"
-#include "tank_counting.cx"
+#include "tank_counting.h"
 
 int SimpleExample() {
     // Create NN: input=2, one hidden layer with 2 neurons, output=1 neuron
