@@ -122,6 +122,31 @@ int MnistExample() {
 }
 
 int TankTraining() {
+    // Frequentist sample output:
+    {
+    for (int i = 0; i < 10; i++) {
+        TankPopulationExercise ex = CreateTankPopulationExercise(100, 1000, 15);
+        const int pop = ex.true_population;
+        const int pred = FrequentistPrediction(ex.population_peeks);
+        const double error = abs(pred - pop) / static_cast<double>(pop);
+        printf("Tank population: %4.0d, Prediction: %4.0d, Error: %.2f%%\n",
+                pop, pred, error * 100);
+    }
+
+    const int kTotalRuns = 10000;
+    double mean_error = 0.0;
+    for (int i = 0; i < kTotalRuns; i++) {
+        TankPopulationExercise ex = CreateTankPopulationExercise(20, 1000, 20);
+        const int pop = ex.true_population;
+        const int pred = FrequentistPrediction(ex.population_peeks);
+        mean_error += abs(pred - pop) / static_cast<double>(pop) / kTotalRuns;
+    }
+    printf("Mean error over %d runs: %.2f%%\n",
+            kTotalRuns, mean_error * 100);
+    }
+
+    // NN solution:
+    {
     const int kEpoch = 50;
     const int kBatchSize = 1000;
     const int kTankMin = 100;
@@ -221,7 +246,8 @@ int TankTraining() {
     }
     printf("Mean error over %d runs: %.2f%%\n",
             kTotalRuns, mean_error * 100);
-
+    }
+    
     return 0;
 }
 
@@ -230,26 +256,5 @@ int main(int argc, char** argv) {
     printf("Seed: %d\n", seed);
     srand(seed);
 
-    // Sample output
-    for (int i = 0; i < 10; i++) {
-        TankPopulationExercise ex = CreateTankPopulationExercise(100, 1000, 15);
-        const int pop = ex.true_population;
-        const int pred = FrequentistPrediction(ex.population_peeks);
-        const double error = abs(pred - pop) / static_cast<double>(pop);
-        printf("Tank population: %4.0d, Prediction: %4.0d, Error: %.2f%%\n",
-                pop, pred, error * 100);
-    }
-
-    const int kTotalRuns = 10000;
-    double mean_error = 0.0;
-    for (int i = 0; i < kTotalRuns; i++) {
-        TankPopulationExercise ex = CreateTankPopulationExercise(20, 1000, 20);
-        const int pop = ex.true_population;
-        const int pred = FrequentistPrediction(ex.population_peeks);
-        mean_error += abs(pred - pop) / static_cast<double>(pop) / kTotalRuns;
-    }
-    printf("Mean error over %d runs: %.2f%%\n",
-            kTotalRuns, mean_error * 100);
-
-    TankTraining();
+    MnistExample();
 }

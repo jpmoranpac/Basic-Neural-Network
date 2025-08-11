@@ -51,6 +51,7 @@ TankPopulationExercise CreateTankPopulationExercise(const int& min_population,
 
 int FrequentistPrediction(const std::vector<int> tank_population) {
     // m: highest number seen
+    // k: number of observations
     const int m = *(std::max_element(tank_population.begin(),
                                      tank_population.end()));
     const int k = static_cast<int>(tank_population.size());
