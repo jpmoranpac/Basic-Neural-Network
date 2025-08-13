@@ -124,9 +124,8 @@ void NeuralNetwork::Backwards(const std::vector<double>& target) {
                     + ", expected target size is " + std::to_string(num_outputs_));
     }
 
-    std::vector<std::vector<double>> dCost_dOutput;
-    dCost_dOutput.push_back(Calculate_dCostdOutput(target));
-    std::vector<std::vector<double>> dCost_dInput;
+    std::vector<double> dCost_dOutput = Calculate_dCostdOutput(target);
+    std::vector<double> dCost_dInput;
 
     for (auto it = layers.rbegin(); it != layers.rend(); ++it) {
         dCost_dInput = it->Backwards(dCost_dOutput);
@@ -136,33 +135,29 @@ void NeuralNetwork::Backwards(const std::vector<double>& target) {
 
 // TODO: instead of returning the whole vector, process a running sum
 //       of the mean error for each neuron on the previous layer
-std::vector<std::vector<double>> Layer::Backwards(const std::vector<std::vector
-                                                  <double>>& dCost_dOutput) {
-    for (const auto& single_dCost : dCost_dOutput) {
-        if (neurons.size() != single_dCost.size()) {
+std::vector<double> Layer::Backwards(const std::vector<double>& dCost_dOutput) {
+    if (neurons.size() != dCost_dOutput.size()) {
                 throw std::runtime_error("Input size mismatch in Layer::Backwar"
-                "ds. dCost_dOutput is " + std::to_string(single_dCost.size()) 
+            "ds. dCost_dOutput is " + std::to_string(dCost_dOutput.size()) 
                 + ", number of neurons is " + std::to_string(neurons.size()));
         }
-    }
 
-    // The inner vector is the dCost_dInput of a single neuron on all 
-    // neurons of the previous layer
-    std::vector<std::vector<double>> dCost_dInput;
+    // Each input to this layer has an impact on the final cost, influenced by
+    // the weights to each neuron in this layer. As such, track the average
+    // cost gradient relative to input, calculated as the mean of the cost
+    // gradient relative to input over all this layer's neuron's weights.
+    std::vector<double> mean_dCost_dInput(num_inputs, 0.0);
     
-    for (int i = 0; i < neurons.size(); i++) {
-        // Calculate average dCost/dOutput for this neuron
-        double mean_dCost_dOutpuy = 0.0;
-        for (const auto& single_dCost : dCost_dOutput) {
-            mean_dCost_dOutpuy += single_dCost.at(i);
+    for (int neuron_idx = 0; neuron_idx < neurons.size(); neuron_idx++) {
+        auto dCost_dInput =
+                neurons.at(neuron_idx).Backwards(dCost_dOutput.at(neuron_idx));
+        for (int input_idx = 0; input_idx < dCost_dInput.size(); input_idx++) {
+            mean_dCost_dInput.at(input_idx) += dCost_dInput.at(input_idx)
+                                          / static_cast<double>(neurons.size());
         }
-        mean_dCost_dOutpuy /= dCost_dOutput.size();
-
-        dCost_dInput.push_back(
-            neurons.at(i).Backwards(mean_dCost_dOutpuy));
     }
 
-    return dCost_dInput;
+    return mean_dCost_dInput;
 }
 
 std::vector<double> Neuron::Backwards(const double& mean_dCost_dOutpuy) {

@@ -83,8 +83,8 @@ public:
     ///                      in this layer
     /// @return vector of network costs relative to the output of each neuron
     ///         in the previous layer
-    std::vector<std::vector<double>> Backwards(
-                        const std::vector<std::vector<double>>& dCost_dOutput);
+    std::vector<double> Backwards(
+                        const std::vector<double>& dCost_dOutput);
                         
     /// @brief Print a summary of this layer to the console
     /// @return void
