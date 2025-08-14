@@ -3,7 +3,6 @@
 #include <stdexcept>
 
 #include "neural_network.h"
-#include "activation_functions.h"
 
 #define LEARNING_RATE 0.025
 
@@ -20,37 +19,33 @@ double RandRange(const double &min, const double& max)
 // =======================================
 
 NeuralNetwork::NeuralNetwork(const int& num_inputs, const int& num_outputs, 
-                             const std::vector<int>& neurons_per_layer):
+                             const std::vector<int>& neurons_per_layer,
+                             ActivationFunction hidden_layer_activation,
+                             ActivationFunction output_layer_activation):
                              num_inputs_(num_inputs), num_outputs_(num_outputs)
                              {
     int prev_size = num_inputs;
-    for (const auto& num_neurons : neurons_per_layer) {
+    for (const auto& neurons : neurons_per_layer) {
         // Each hidden layer has a number of inputs equal to the previous
         // layer's number of neurons
-        layers.emplace_back(Layer(prev_size, num_neurons,
-                                &Sigmoid, &SigmoidDerivative));
-        prev_size = num_neurons;
+        layers.emplace_back(Layer(prev_size, neurons, hidden_layer_activation));
+        prev_size = neurons;
     }
 
     // Output layer
-    layers.emplace_back(Layer(neurons_per_layer.back(), num_outputs, 
-                           &Sigmoid, &SigmoidDerivative));
+    layers.emplace_back(Layer(prev_size, num_outputs, output_layer_activation));
 }
 
 Layer::Layer(const int& num_input_nodes, const int& num_neurons,
-             double (*ActivationFunction)(double),
-             double (*ActivationFunctionDerivative)(double)) :
+             ActivationFunction activation) :
              num_inputs(num_input_nodes) {
     for (int i = 0; i < num_neurons; i++) {
-        neurons.emplace_back(Neuron(num_input_nodes, ActivationFunction,
-                                 ActivationFunctionDerivative));
+        neurons.emplace_back(Neuron(num_input_nodes, activation));
     }
 }
 
-Neuron::Neuron(const int& num_input_nodes, double (*ActivationFunction)(double),
-               double (*ActivationFunctionDerivative)(double)) :
-               ActivationFunction_(ActivationFunction),
-               ActivationFunctionDerivative_(ActivationFunctionDerivative) {
+Neuron::Neuron(const int& num_input_nodes, ActivationFunction activation) :
+               activation_(activation) {
     bias = RandRange(-1, 1);
     for (int i = 0; i < num_input_nodes; i++) {
         weights.push_back(RandRange(-1, 1));
@@ -65,7 +60,7 @@ std::vector<double> NeuralNetwork::Forwards(const std::vector<double>& input) {
     if (num_inputs_ != input.size()) {
         throw std::runtime_error("Input size mismatch in NeuralNetwork::Forward"
                     "s. Input size is " + std::to_string(input.size()) 
-                    + ", expected input size is " + std::to_string(num_inputs_));
+                    + ", expected input size " + std::to_string(num_inputs_));
     }
 
     std::vector<double> next_input = input;
@@ -108,7 +103,7 @@ double Neuron::Forwards(const std::vector<double>& inputs) {
         result += inputs.at(i) * weights.at(i);
     }
 
-    latest_output = ActivationFunction_(result);
+    latest_output = activation_.Forwards(result);
 
     return latest_output;
 }
@@ -167,8 +162,7 @@ std::vector<double> Neuron::Backwards(const double& mean_dCost_dOutpuy) {
                         + ", weight size is " + std::to_string(weights.size()));
     }
 
-    double delta = mean_dCost_dOutpuy 
-                   * ActivationFunctionDerivative_(latest_output);
+    double delta = mean_dCost_dOutpuy * activation_.Derivative(latest_output);
 
     // Bias change: -(learning rate * error * activation function derivative)
     bias -= LEARNING_RATE * delta;

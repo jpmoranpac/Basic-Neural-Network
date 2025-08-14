@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <random>
 
+#include "activation_functions.h"
+
 /// @brief A single neuron in the neural network. Composes the Layer class.
 ///        Contains bias, weights, and the activation function and activation
 ///        function derivative.
@@ -10,10 +12,8 @@ private:
     // Bias and weights, updated by the Backwards method
     double bias = 0.0;
     std::vector<double> weights;
-    // Activtion function, to calculate forward pass
-    double (*ActivationFunction_)(double);
-    // Activtion function derivative, to calculate back propagation
-    double (*ActivationFunctionDerivative_)(double);
+    // Activtion function
+    ActivationFunction activation_;
 
     // Store last input and output, required for back propagation
     std::vector<double> latest_input;
@@ -24,9 +24,7 @@ public:
     /// @param num_input_nodes number of neurons that input to this neuron
     /// @param ActivationFunction for forward pass
     /// @param ActivationFunctionDerivative for back propagation
-    Neuron(const int& num_input_nodes,
-           double (*ActivationFunction)(double),
-           double (*ActivationFunctionDerivative)(double));
+    Neuron(const int& num_input_nodes, ActivationFunction activation);
 
     /// @brief Forward pass using the activation function provided during
     ///        initialisation
@@ -68,8 +66,7 @@ public:
     /// @param ActivationFunctionDerivative for each neuron used in back
     ///                                     propagation
     Layer(const int& num_input_nodes, const int& num_neurons,
-          double (*ActivationFunction)(double),
-          double (*ActivationFunctionDerivative)(double));
+          ActivationFunction activation);
 
     /// @brief Forwards pass
     /// @param inputs to this layer
@@ -112,7 +109,9 @@ public:
     /// @param neurons_per_layer vector representing the number of neurons to
     ///                          create in each hidden layer
     NeuralNetwork(const int& num_inputs, const int& num_outputs, 
-                  const std::vector<int>& neurons_per_layer);
+                  const std::vector<int>& neurons_per_layer,
+                  ActivationFunction hidden_layer_activation = Sigmoid,
+                  ActivationFunction output_layer_activation = Sigmoid);
 
     /// @brief Forwards pass
     /// @param input inputs to the network
