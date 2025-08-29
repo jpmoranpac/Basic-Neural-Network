@@ -2,16 +2,14 @@
 #include "load_data.h"
 #include "neural_network_demo.h"
 
-void SimpleExample() {
-    // Create NN: input=2, one hidden layer with 2 neurons, output=1 neuron
-    std::vector<int> hidden_layers = {2};
+void SimpleExample(const int& epochs, const std::vector<int>& hidden_layers) {
     NeuralNetwork nn(2, 1, hidden_layers);
 
     // Sample input and target output
     std::vector<double> input = {0.5, -0.3};
     std::vector<double> target = {0.7};
 
-    for (int epoch = 0; epoch <= 1000; ++epoch) {
+    for (int epoch = 0; epoch <= epochs; ++epoch) {
         auto output = nn.Forwards(input);
         nn.Backwards(target);
         if ((epoch) % 100 == 0) {
@@ -21,7 +19,8 @@ void SimpleExample() {
     }
 }
 
-void MnistExample() {
+void MnistExample(const int& epochs, const int& batch_size,
+                 const int& test_count, const std::vector<int>& hidden_layers) {
     printf("Loading data...\n");
     std::vector<std::vector<double>> images_train;
     std::vector<int> labels_train;
@@ -36,11 +35,10 @@ void MnistExample() {
     printf("Loaded %d training samples and %d testing samples\n",
             labels_train.size(), labels_test.size());
 
-    std::vector<int> hidden_layers = {100, 100};
     NeuralNetwork network = NeuralNetwork(28 * 28, 10, hidden_layers);
 
-    const int kEpoch = 20;
-    const int kBatchSize = 200;
+    const int kEpoch = epochs;
+    const int kBatchSize = batch_size;
 
     printf("Beginning training...\n");
 
@@ -93,7 +91,7 @@ void MnistExample() {
     }
 
     // Print a selection of random images to demonstrate learning
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < test_count; i++) {
         int index = rand() % images_test.size();
         std::vector<double> image = images_test[index];
         int label = labels_test[index];

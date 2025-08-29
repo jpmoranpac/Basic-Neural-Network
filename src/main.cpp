@@ -143,10 +143,11 @@ int main(int argc, char** argv) {
                      general_cfg.test_count, general_cfg.hidden_layers);
     }
     else if (general_cfg.demo == "mnist") {
-        MnistExample();
+        MnistExample(general_cfg.epochs, general_cfg.batch_size,
+                     general_cfg.test_count, general_cfg.hidden_layers);
     }
     else if (general_cfg.demo == "simple") {
-        SimpleExample();
+        SimpleExample(general_cfg.epochs, general_cfg.hidden_layers);
     }
     else {
         printf("Unknown demo type \"%s\"\n", general_cfg.demo.c_str());
